@@ -50,7 +50,7 @@
      <string>Текст 1</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit">
+   <widget class="QPlainTextEdit" name="text1">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -89,7 +89,7 @@
      <string>Текст 2</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="plainTextEdit_2">
+   <widget class="QPlainTextEdit" name="text2">
     <property name="geometry">
      <rect>
       <x>400</x>

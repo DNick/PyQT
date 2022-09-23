@@ -15,10 +15,12 @@ class Example(QMainWindow, Ui_MainWindow):
 
     def compare(self):
         cou = 0
-        for i in range(min(len(self.plainTextEdit.toPlainText()), len(self.plainTextEdit_2.toPlainText()))):
-            if self.plainTextEdit.toPlainText()[i] == self.plainTextEdit_2.toPlainText()[i]:
+        ln1 = self.text1.toPlainText().replace(' ', '').replace('\n', '').replace('\t', '')
+        ln2 = self.text2.toPlainText().replace(' ', '').replace('\n', '').replace('\t', '')
+        for i in range(min(len(ln1), len(ln2))):
+            if ln1[i] == ln2[i]:
                 cou += 1
-        mx = max(len(self.plainTextEdit.toPlainText()), len(self.plainTextEdit_2.toPlainText()))
+        mx = max(len(ln1), len(ln2))
         if mx:
             self.statusbar.showMessage(f'Код похож на {round(cou * 100 / mx, 2)}%')
             if cou * 100 / mx > float(self.doubleSpinBox.text().replace(',', '.')):
