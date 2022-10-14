@@ -1,74 +1,93 @@
+import csv
 import sys
 
-from PIL.Image import Transpose
 from PyQt5 import uic
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QCheckBox, QLCDNumber, QMainWindow
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 from ui.interface import Ui_MainWindow
-from PIL import Image
 
 
-class Example(QMainWindow, Ui_MainWindow):
+class MyWidget(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi(self)
-        self.initUI()
-
-    def set_image(self, name):
-        self.pixmap = QPixmap(name).scaled(600, 500)
-        self.label = QLabel('')
-        self.label.setPixmap(self.pixmap)
-
-    def initUI(self):
         uic.loadUi('ui/interface.ui', self)
-        self.setWindowTitle('PIL 2.0')
-        self.rotat = 0
-        Image.open('based.png').save('changed.png')
-        self.set_image('changed.png')
-        self.verticalLayout_3.addWidget(self.label)
-        self.color.buttonClicked.connect(self.change_color)
-        self.rotate.buttonClicked.connect(self.rotates)
+        self.comboBox_2.addItem('Все')
+        self.comboBox.addItem('Все')
+        self.comboBox_2.setCurrentText('Все')
+        self.second()
+        self.comboBox.currentIndexChanged.connect(self.first)
+        self.comboBox_2.currentIndexChanged.connect(self.second)
+        self.pushButton.clicked.connect(self.print)
 
-    def rotates(self, button: QPushButton):
-        if button.objectName() == 'vs':
-            Image.open('changed.png').transpose(Transpose.ROTATE_90).save('changed.png')
-            self.rotat += 1
-        else:
-            Image.open('changed.png').transpose(Transpose.ROTATE_270).save('changed.png')
-            self.rotat += 3
+    def first(self):
+        if self.comboBox_2.currentText() != 'Все':
+            return
+        for i in range(self.comboBox_2.count() - 1):
+            self.comboBox_2.removeItem(1)
+        with open('rez.csv', encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            sp = set()
+            for index, row in enumerate(reader):
+                if index != 0:
+                    sp.add(row[2].split('-')[3])
 
-        label = self.label
-        self.set_image("changed.png")
-        self.verticalLayout_3.replaceWidget(label, self.label)
+        self.comboBox_2.addItems(list(sp))
 
-    def change_color(self, button: QPushButton):
-        if button.text() == 'R':
-            colors = [1, 0, 0]
-        elif button.text() == 'G':
-            colors = [0, 1, 0]
-        elif button.text() == 'B':
-            colors = [0, 0, 1]
-        else:
-            colors = [1, 1, 1]
+    def second(self):
+        if self.comboBox.currentText() != 'Все':
+            return
+        for i in range(self.comboBox.count() - 1):
+            self.comboBox.removeItem(1)
+        with open('rez.csv', encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            sp = set()
+            for index, row in enumerate(reader):
+                if index != 0:
+                    sp.add(row[2].split('-')[2])
+            self.comboBox.addItems(list(sp))
 
-        im = Image.open("based.png")
-        for i in range(self.rotat):
-            im = im.transpose(Transpose.ROTATE_90)
-        pixels = im.load()
-        x, y = im.size
+    def print(self):
+        a, b = self.comboBox.currentText(), self.comboBox_2.currentText()
+        flag1 = False
+        flag2 = False
+        if a == 'Все':
+            flag1 = True
+            a = '0'
+        if b == 'Все':
+            flag2 = True
+            b = '0'
 
-        for i in range(x):
-            for j in range(y):
-                r, g, b = pixels[i, j]
-                pixels[i, j] = r * colors[0], g * colors[1], b * colors[2]
-        im.save('changed.png')
-        label = self.label
-        self.set_image("changed.png")
-        self.verticalLayout_3.replaceWidget(label, self.label)
+        with open('rez.csv', encoding="utf8", newline='') as inp, open('output.csv', 'w', newline='', encoding='utf8') as outp:
+            reader = csv.reader(inp, delimiter=',', quotechar='"')
+            writer = csv.writer(outp, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            sp = []
+            for index, row in enumerate(reader):
+                if index != 0 and (int(row[2].split('-')[2]) == int(a) or flag1) and \
+                        (int(row[2].split('-')[3]) == int(b) or flag2):
+                    sp.append([row[1].split()[-2], row[-1]])
+            sp.sort(key=lambda x: (int(x[1]), x[0]), reverse=True)
+            print(sp)
+            for i in sp:
+                writer.writerow(i)
+
+        self.loadTable('output.csv')
+
+    def loadTable(self, table_name):
+        with open(table_name, encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile,
+                                delimiter=';', quotechar='"')
+            self.tableWidget.setRowCount(0)
+            for i, row in enumerate(reader):
+                self.tableWidget.setRowCount(
+                    self.tableWidget.rowCount() + 1)
+                for j, elem in enumerate(row):
+                    self.tableWidget.setItem(
+                        i, j, QTableWidgetItem(elem))
+        self.tableWidget.resizeColumnsToContents()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = Example()
+    ex = MyWidget()
     ex.show()
     sys.exit(app.exec())
