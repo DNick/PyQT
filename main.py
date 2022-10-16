@@ -1,7 +1,7 @@
 import csv
 import sys
-
-from PyQt5 import uic
+from PyQt5 import uic, QtGui
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 from ui.interface import Ui_MainWindow
@@ -11,6 +11,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('ui/interface.ui', self)
+        self.setWindowTitle('Результат олимпиады: фильтрация')
         self.comboBox_2.addItem('Все')
         self.comboBox.addItem('Все')
         self.comboBox_2.setCurrentText('Все')
@@ -57,33 +58,29 @@ class MyWidget(QMainWindow, Ui_MainWindow):
             flag2 = True
             b = '0'
 
-        with open('rez.csv', encoding="utf8", newline='') as inp, open('output.csv', 'w', newline='', encoding='utf8') as outp:
+        with open('rez.csv', encoding="utf8", newline='') as inp:
             reader = csv.reader(inp, delimiter=',', quotechar='"')
-            writer = csv.writer(outp, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             sp = []
             for index, row in enumerate(reader):
                 if index != 0 and (int(row[2].split('-')[2]) == int(a) or flag1) and \
                         (int(row[2].split('-')[3]) == int(b) or flag2):
-                    sp.append([row[1].split()[-2], row[-1]])
+                    sp.append([row[1].split()[-2], row[-1], row[1]])
             sp.sort(key=lambda x: (int(x[1]), x[0]), reverse=True)
-            print(sp)
-            for i in sp:
-                writer.writerow(i)
-
-        self.loadTable('output.csv')
-
-    def loadTable(self, table_name):
-        with open(table_name, encoding="utf8") as csvfile:
-            reader = csv.reader(csvfile,
-                                delimiter=';', quotechar='"')
+            win3, win2, win1 = sorted(list(set(map(lambda x: int(x[1]), sp))))[-3:]
+            self.tableWidget.clear()
             self.tableWidget.setRowCount(0)
-            for i, row in enumerate(reader):
-                self.tableWidget.setRowCount(
-                    self.tableWidget.rowCount() + 1)
-                for j, elem in enumerate(row):
-                    self.tableWidget.setItem(
-                        i, j, QTableWidgetItem(elem))
-        self.tableWidget.resizeColumnsToContents()
+            self.tableWidget.setHorizontalHeaderLabels(['Фамилия', "Результат", "Логин"])
+            for i in range(len(sp)):
+                self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+                for j in range(len(sp[i])):
+                    item = QTableWidgetItem(sp[i][j])
+                    if int(sp[i][1]) == win1:
+                        item.setBackground(QColor(224, 214, 0))
+                    elif int(sp[i][1]) == win2:
+                        item.setBackground(QColor(180, 181, 189))
+                    elif int(sp[i][1]) == win3:
+                        item.setBackground(QColor(155, 82, 33))
+                    self.tableWidget.setItem(i, j, item)
 
 
 if __name__ == '__main__':
